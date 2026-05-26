@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                        },
+                        sidebar: '#0f172a'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            /* Sidebar transitions */
+            .sidebar-transition {
+                transition: width 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+            }
+            .sidebar-collapsed {
+                width: 0 !important;
+                opacity: 0;
+            }
+            
+            /* Tab transition animation */
+            .tab-animate { 
+                animation: fadeIn 0.4s ease; 
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            /* Custom scrollbar for tables/main area */
+            ::-webkit-scrollbar { width: 8px; height: 8px; }
+            ::-webkit-scrollbar-track { background: #f1f5f9; }
+            ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+            ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex overflow-hidden selection:bg-brand-500 selection:text-white">
+
+    <aside class="sidebar-transition w-64 bg-sidebar text-slate-300 flex flex-col whitespace-nowrap overflow-hidden shrink-0 z-20 shadow-xl" id="sidebar">
+        <div class="py-8 px-6">
+            <h2 class="text-center text-sm font-bold tracking-[0.2em] text-white uppercase mb-2">Business Panel</h2>
+            <div class="h-px w-12 bg-slate-700 mx-auto mt-4 mb-6"></div>
+        </div>
+        
+        <nav class="flex-1 flex flex-col gap-1 px-3">
+            <button class="nav-btn w-full text-left px-4 py-3 rounded-lg font-medium transition-all hover:bg-slate-800 hover:text-white bg-brand-500 text-white shadow-md shadow-brand-500/20" 
+                    onclick="showTab('inventoryTab', this); initInventoryTab(); toggleSidebarMobile();">
+                <span class="flex items-center gap-3">
+                    <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    Inventory List
+                </span>
+            </button>
+            <button class="nav-btn w-full text-left px-4 py-3 rounded-lg font-medium transition-all hover:bg-slate-800 hover:text-white" 
+                    onclick="showTab('graphsTab', this); fetchGraphData(); toggleSidebarMobile();">
+                <span class="flex items-center gap-3">
+                    <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                    Purchase Strategy
+                </span>
+            </button>
+            <button class="nav-btn w-full text-left px-4 py-3 rounded-lg font-medium transition-all hover:bg-slate-800 hover:text-white" 
+                    onclick="showTab('timelineTab', this); fetchTimeline(); toggleSidebarMobile();">
+                <span class="flex items-center gap-3">
+                    <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Transaction Timeline
+                </span>
+            </button>
+            <button class="nav-btn w-full text-left px-4 py-3 rounded-lg font-medium transition-all hover:bg-slate-800 hover:text-white" 
+                    onclick="showTab('heatmapTab', this); fetchInventory(); toggleSidebarMobile();">
+                <span class="flex items-center gap-3">
+                    <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg>
+                    Stock Heatmap
+                </span>
+            </button>
+        </nav>
+        
+        <a href="/logout" class="block w-full bg-red-500 hover:bg-red-600 text-white text-center py-4 font-bold transition-colors mt-auto flex justify-center items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            Logout
+        </a>
+    </aside>
+
+    <div class="flex-1 flex flex-col h-full overflow-hidden transition-all duration-300 ease-in-out relative">
+        
+        <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10 shrink-0">
+            <button class="text-slate-500 hover:text-brand-600 hover:bg-slate-50 p-2 rounded-lg transition-colors flex items-center gap-2 font-medium" onclick="toggleSidebar()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                <span class="hidden sm:inline">Menu</span>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold shadow-inner">
+                    A
+                </div>
+                <span class="text-sm font-semibold text-slate-700">Admin</span>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            
+            <div id="inventoryTab" class="tab-pane tab-animate max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-t-4 border-t-brand-500 flex flex-col">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Total Investment</h4>
+                        <h2 id="metric-investment" class="text-3xl font-extrabold text-slate-800 mt-auto">₹0.00</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-t-4 border-t-emerald-500 flex flex-col">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Weekly Profit</h4>
+                        <h2 id="metric-weekly" class="text-3xl font-extrabold text-emerald-500 mt-auto">₹0.00</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-t-4 border-t-indigo-500 flex flex-col">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Total Profit</h4>
+                        <h2 id="metric-total-profit" class="text-3xl font-extrabold text-indigo-500 mt-auto">₹0.00</h2>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-slate-800">Current Inventory (Ranked by Sales)</h2>
+                        <button onclick="promptAddItem()" class="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm shadow-brand-500/30 flex items-center gap-2 active:scale-95 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Item
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="inventoryTable" class="w-full text-left whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="px-6 py-4 font-semibold">Item Name</th>
+                                    <th class="px-6 py-4 font-semibold">Price</th>
+                                    <th class="px-6 py-4 font-semibold">Stock Left</th>
+                                    <th class="px-6 py-4 font-semibold text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+                    
+            <div id="heatmapTab" class="tab-pane tab-animate max-w-7xl mx-auto hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8 min-h-[500px]">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4">Stock Health Matrix</h2>
+                    <div class="flex items-center gap-6 mb-8 text-sm font-semibold text-slate-600 border-b border-slate-100 pb-4">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500 shadow-sm"></span> Critical (0)</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-400 shadow-sm"></span> Low (1-10)</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm"></span> Healthy (11+)</div>
+                    </div>
+                    <div id="heatMapGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4"></div>
+                </div>
+            </div>
+
+            <div id="graphsTab" class="tab-pane tab-animate max-w-7xl mx-auto hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+                    <h2 class="text-lg font-bold text-slate-800 mb-6">Optimization Model (Particle Swarm)</h2>
+                    <div class="chart-container h-[400px] w-full relative">
+                        <canvas id="myChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+                        <h3 class="text-lg font-bold text-slate-800">Suggested Buying Units</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="planTable" class="w-full text-left whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="px-6 py-4 font-semibold">Item Name</th>
+                                    <th class="px-6 py-4 font-semibold">Suggested Units</th>
+                                    <th class="px-6 py-4 font-semibold">Est. ROI %</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="timelineTab" class="tab-pane tab-animate max-w-7xl mx-auto hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+                        <h2 class="text-lg font-bold text-slate-800">Recent Activity</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="timelineTable" class="w-full text-left whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="px-6 py-4 font-semibold">Date & Time</th>
+                                    <th class="px-6 py-4 font-semibold">Item Name</th>
+                                    <th class="px-6 py-4 font-semibold">Action</th>
+                                    <th class="px-6 py-4 font-semibold">Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</form>
+    <script>
+        let myChartInstance = null;
+        let lastSoldAmounts = {}; 
+        let globalChartData = {}; 
+        let activeAccordionChart = null; 
+
+        // Sidebar Toggle Logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('sidebar-collapsed');
+        }
+
+        // Auto collapse sidebar on mobile when tab changes
+        function toggleSidebarMobile() {
+            if (window.innerWidth < 1024) {
+                document.getElementById('sidebar').classList.add('sidebar-collapsed');
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if(window.innerWidth < 1024) document.getElementById('sidebar').classList.add('sidebar-collapsed');
+            else document.getElementById('sidebar').classList.remove('sidebar-collapsed');
+        });
+
+        // UI Tab Switcher
+        function showTab(tabId, clickedButton) {
+            const allTabs = document.querySelectorAll('.tab-pane');
+            allTabs.forEach(tab => {
+                tab.classList.add('hidden'); 
+            });
+            
+            const activeTab = document.getElementById(tabId);
+            if (activeTab) {
+                activeTab.classList.remove('hidden');
+            }
+
+            const allButtons = document.querySelectorAll('.nav-btn');
+            allButtons.forEach(btn => {
+                btn.classList.remove('bg-brand-500', 'text-white', 'shadow-md');
+                btn.classList.add('hover:bg-slate-800', 'hover:text-white');
+            });
+            
+            if (clickedButton) {
+                clickedButton.classList.remove('hover:bg-slate-800', 'hover:text-white');
+                clickedButton.classList.add('bg-brand-500', 'text-white', 'shadow-md');
+            }
+        }
+
+        // Initialize Inventory Page
+        function initInventoryTab() {
+            fetchMetrics();
+            fetchInventory();
+        }
+
+        function fetchMetrics() {
+            fetch('/api/metrics')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('metric-investment').innerText = `₹${data.investment}`;
+                    document.getElementById('metric-weekly').innerText = `₹${data.weekly_profit}`;
+                    document.getElementById('metric-total-profit').innerText = `₹${data.total_profit}`;
+                }).catch(err => console.log("Error loading metrics"));
+        }
+
+        function fetchInventory() {
+            fetch(`/api/inventory_stats?days=30`)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector('#inventoryTable tbody');
+                    const heatMap = document.getElementById('heatMapGrid');
+                    
+                    if (tbody) tbody.innerHTML = '';
+                    if (heatMap) heatMap.innerHTML = '';
+                    
+                    globalChartData = data.chart_data;
+
+                    data.items.forEach((item, index) => {
+                        // 1. Heat Map Logic
+                        if (heatMap) {
+                            let heatColor = 'bg-emerald-500 text-white';
+                            let pulseEffect = '';
+                            if (item.current_stock === 0) { heatColor = 'bg-red-500 text-white'; pulseEffect = 'animate-pulse'; }
+                            else if (item.current_stock <= 10) { heatColor = 'bg-amber-400 text-slate-900'; } 
+
+                            heatMap.innerHTML += `
+                                <div class="${heatColor} ${pulseEffect} rounded-xl p-3 shadow-sm flex flex-col items-center justify-center transition-transform hover:scale-105 hover:shadow-md cursor-help" title="${item.name} has ${item.current_stock} units left">
+                                    <span class="text-xl font-black">${item.current_stock}</span>
+                                    <span class="text-xs font-bold text-center mt-1 truncate w-full opacity-90">${item.name}</span>
+                                </div>
+                            `;
+                        }
+
+                        // 2. Inventory Row Logic
+                        if (tbody) {
+                            const stockColor = item.current_stock === 0 ? 'text-red-500' : 'text-slate-800';
+                            const safeId = item.name.replace(/\s+/g, '-'); 
+
+                            tbody.innerHTML += `
+                                <tr class="hover:bg-slate-50 transition-colors group">
+                                    <td class="px-6 py-4 font-medium text-slate-800">
+                                        <div class="flex items-center gap-3">
+                                            ${item.name}
+                                            <button onclick="toggleAccordion('${safeId}', '${item.name}')" class="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold rounded shadow-sm transition-all flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                                                Graph
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-slate-600">₹${item.selling_price}</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-block min-w-[2.5rem] text-base font-bold ${stockColor}">${item.current_stock}</span>
+                                            <button class="opacity-0 group-hover:opacity-100 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold rounded-md transition-all" onclick="promptEditStock('${item.name}', ${item.current_stock})">Edit</button>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <span class="inline-block min-w-[2rem] text-base font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded text-center border border-red-100">${lastSoldAmounts[item.name] || 1}</span>
+                                            <button class="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-md shadow-sm shadow-brand-500/30 transition-all active:scale-95" onclick="promptSell('${item.name}', ${item.current_stock})">Sell</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr id="accordion-${safeId}" class="hidden bg-slate-100/50 border-b-2 border-slate-200 shadow-inner">
+                                    <td colspan="4" class="p-6">
+                                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                                            <h3 class="font-bold text-slate-800">${item.name} Sales Performance</h3>
+                                            <div class="flex items-center gap-3 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Past</span>
+                                                <input type="range" id="slider-${safeId}" min="1" max="30" value="13" class="cursor-pointer accent-brand-500 w-24 sm:w-32" oninput="document.getElementById('label-${safeId}').innerText = this.value + ' Days'" onchange="updateAccordionChart('${safeId}', '${item.name}')">
+                                                <span id="label-${safeId}" class="text-xs font-bold text-brand-600 w-14 text-right">13 Days</span>
+                                            </div>
+                                        </div>
+                                        <div class="h-64 w-full bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                            <canvas id="chart-${safeId}"></canvas>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                        }
+                    });
+                }).catch(err => console.log("Error loading inventory:", err));
+        }
+
+        // Accordion Trigger Logic
+        function toggleAccordion(safeId, itemName) {
+            const accordionRow = document.getElementById(`accordion-${safeId}`);
+            
+            if (!accordionRow.classList.contains('hidden')) {
+                accordionRow.classList.add('hidden');
+                return;
+            }
+            
+            document.querySelectorAll('tr[id^="accordion-"]').forEach(row => row.classList.add('hidden'));
+            accordionRow.classList.remove('hidden');
+            
+            updateAccordionChart(safeId, itemName);
+        }
+
+        function updateAccordionChart(safeId, itemName) {
+            const days = document.getElementById(`slider-${safeId}`).value;
+            drawAccordionChart(safeId, itemName, parseInt(days));
+        }
+
+        function drawAccordionChart(safeId, itemName, days) {
+            const ctx = document.getElementById(`chart-${safeId}`).getContext('2d');
+            if (activeAccordionChart) activeAccordionChart.destroy(); 
+            
+            let labels = [];
+            for (let i = days - 1; i >= 0; i--) {
+                let d = new Date();
+                d.setDate(d.getDate() - i);
+                labels.push(d.toISOString().split('T')[0]); 
+            }
+
+            const itemData = globalChartData[itemName] || {};
+            const values = labels.map(date => itemData[date] || 0);
+
+            activeAccordionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Units Sold',
+                        data: values,
+                        borderColor: '#22c55e', 
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#22c55e',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, suggestedMax: 5, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        function promptSell(itemName, currentStock) {
+            if (currentStock === 0) {
+                alert(`⚠️ Out of stock! You cannot sell ${itemName} until you add more inventory.`);
+                return;
+            }
+
+            let previousSellQty = lastSoldAmounts[itemName] || 1;
+            let sellQty = prompt(`Selling ${itemName}.\nCurrent Stock: ${currentStock}\n\nEnter the number of items sold:`, previousSellQty);
+            
+            if (sellQty !== null) {
+                sellQty = parseInt(sellQty);
+                if (!isNaN(sellQty) && sellQty > 0) {
+                    if (sellQty > currentStock) {
+                        alert(`❌ Invalid Sale: You only have ${currentStock} units of ${itemName} left. You cannot sell ${sellQty}.`);
+                        return;
+                    }
+
+                    lastSoldAmounts[itemName] = sellQty; 
+                    fetch('/api/update_stock', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ item_name: itemName, action: 'sell', qty: sellQty })
+                    }).then(() => initInventoryTab());
+                } else {
+                    alert("Please enter a valid number greater than 0.");
+                }
+            }
+        }
+
+        function promptEditStock(itemName, currentStock) {
+            let newStock = prompt(`Editing total stock for ${itemName}.\nCurrent stock is ${currentStock}.\n\nEnter new exact stock amount:`, currentStock);
+            
+            if (newStock !== null) {
+                newStock = parseInt(newStock);
+                if (!isNaN(newStock) && newStock >= 0) {
+                    if (confirm(`Are you sure you want to change the total stock of ${itemName} to ${newStock}?`)) {
+                        fetch('/api/edit_stock', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ item_name: itemName, new_stock: newStock })
+                        }).then(() => initInventoryTab()); 
+                    }
+                } else {
+                    alert("Please enter a valid number greater than or equal to 0.");
+                }
+            }
+        }
+
+        function fetchGraphData() {
+            fetch('/api/get_pso_data')
+                .then(res => res.json())
+                .then(data => {
+                    const labels = data.optimization_history.map(d => d.iteration);
+                    const values = data.optimization_history.map(d => d.value);
+                    
+                    if (myChartInstance) myChartInstance.destroy();
+                    const ctx = document.getElementById('myChart').getContext('2d');
+                    
+                    Chart.defaults.font.family = "'Inter', sans-serif";
+                    Chart.defaults.color = '#64748b';
+
+                    myChartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: { 
+                            labels: labels, 
+                            datasets: [{ 
+                                label: 'Cost Function', 
+                                data: values, 
+                                borderColor: '#3b82f6', 
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true, 
+                                tension: 0.3,
+                                borderWidth: 2,
+                                pointBackgroundColor: '#ffffff',
+                                pointBorderColor: '#3b82f6',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            }] 
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#1e293b',
+                                    padding: 12,
+                                    titleFont: { size: 13, weight: 'bold' },
+                                    bodyFont: { size: 14 },
+                                    displayColors: false,
+                                    cornerRadius: 8
+                                }
+                            },
+                            scales: {
+                                x: { grid: { display: false, drawBorder: false } },
+                                y: { grid: { color: '#f1f5f9', drawBorder: false } }
+                            }
+                        }
+                    });
+
+                    const tbody = document.querySelector('#planTable tbody');
+                    tbody.innerHTML = '';
+                    data.business_plan.forEach(item => {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-medium text-slate-800">${item.item}</td>
+                                <td class="px-6 py-4 text-slate-600">${item.units}</td>
+                                <td class="px-6 py-4 font-semibold text-emerald-600">${item.roi}%</td>
+                            </tr>`;
+                    });
+                })
+                .catch(err => console.log("Mock data or API missing in static preview"));
+        }
+
+        function promptAddItem() {
+            const name = prompt("STEP 1/4: Enter the New Item Name\n(e.g., Red Bull, Lays):");
+            if (!name) return; 
+            
+            const price = prompt(`STEP 2/4: Enter Selling Price for ${name} (₹):\n(What the customer pays)`, "20");
+            if (price === null || isNaN(price) || price < 0) return alert("Invalid price entered.");
+            
+            const cost = prompt(`STEP 3/4: Enter Cost Price for ${name} (₹):\n(What you paid for it)`, "15");
+            if (cost === null || isNaN(cost) || cost < 0) return alert("Invalid cost entered.");
+            
+            const stock = prompt(`STEP 4/4: Enter Initial Stock for ${name}:`, "0");
+            if (stock === null || isNaN(stock) || stock < 0) return alert("Invalid stock entered.");
+
+            fetch('/api/add_item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, price: price, cost: cost, stock: stock })
+            }).then(res => res.json()).then(data => {
+                if(data.error) alert(data.error);
+                else initInventoryTab(); 
+            });
+        }
+
+        function fetchTimeline() {
+            fetch('/api/transactions')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector('#timelineTable tbody');
+                    tbody.innerHTML = '';
+                    data.forEach(log => {
+                        let colorClass = 'text-slate-800 bg-slate-100';
+                        
+                        if (log.action_type === 'buy' || log.action_type === 'restock') {
+                            colorClass = 'text-emerald-700 bg-emerald-50 border border-emerald-200';
+                        }
+                        if (log.action_type === 'sell' || log.action_type === 'stock_correction') {
+                            colorClass = 'text-red-700 bg-red-50 border border-red-200';
+                        }
+                        
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 text-sm text-slate-500">${log.timestamp}</td>
+                                <td class="px-6 py-4 font-medium text-slate-800">${log.item_name}</td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-block px-2.5 py-1 text-xs font-bold rounded ${colorClass}">
+                                        ${log.action_type.replace('_', ' ').toUpperCase()}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 font-bold text-slate-700">${log.quantity}</td>
+                            </tr>`;
+                    });
+                })
+                .catch(err => console.log("Mock data or API missing in static preview"));
+        }
+
+        window.onload = () => {
+            initInventoryTab();
+            if(window.innerWidth < 1024) toggleSidebarMobile();
+        };
+    </script>
+</body>
+</html>
