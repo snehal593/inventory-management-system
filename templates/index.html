@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -599,5 +600,24 @@
             if(window.innerWidth < 1024) toggleSidebarMobile();
         };
     </script>
+    <script>
+    // Connect to the Socket.IO server
+    var socket = io();
+
+    // Listen for the 'new_order' broadcast
+    socket.on('new_order', function(data) {
+        // Format the list of items beautifully
+        let itemsList = "";
+        for (const [itemName, qty] of Object.entries(data.items)) {
+            itemsList += `\n- ${itemName} (x${qty})`;
+        }
+
+        // Trigger a loud browser alert for the Admin
+        alert(`🔔 NEW PAID ORDER RECEIVED!\n\nTime: ${data.time}\nTotal: ₹${data.total}\n\nItems:${itemsList}\n\nPlease hand these items to the customer.`);
+
+        // Optional: Automatically refresh the dashboard data to show the new profits
+        location.reload(); 
+    });
+</script>
 </body>
 </html>

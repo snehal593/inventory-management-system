@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Storefront</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding-bottom: 80px; background: #f4f4f4; }
+        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        
+        /* New Styles for the Category Dropdown */
+        .filter-container { background: #34495e; padding: 10px; text-align: center; position: sticky; top: 68px; z-index: 99; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .category-select { padding: 10px; width: 90%; font-size: 16px; border-radius: 5px; border: none; font-weight: bold; }
+        
+        .category-title { padding: 10px 15px; background: #e0e0e0; margin: 0; font-size: 18px; }
+        .item-card { display: flex; padding: 15px; background: white; margin-bottom: 2px; align-items: center; justify-content: space-between; }
+        
+        .item-info-wrapper { display: flex; align-items: center; }
+        .item-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 15px; background: #eee; }
+        .item-name { margin: 0 0 5px 0; font-size: 16px; font-weight: bold; }
+        .item-price { margin: 0; color: #27ae60; font-weight: bold; }
+        
+        .add-btn { background: #e32727; color: white; border: none; padding: 8px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;}
+        .qty-control { display: flex; align-items: center; background: #e32727; border-radius: 5px; overflow: hidden; }
+        .qty-btn { background: #e32727; color: white; border: none; padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .qty-btn:active { background: #c0392b; }
+        .qty-num { background: white; color: #e32727; padding: 8px 15px; font-weight: bold; font-size: 14px; }
+        
+        /* New Style for Out of Stock */
+        .out-of-stock { color: #e74c3c; font-weight: bold; padding: 10px; font-size: 14px; background: #fce4e4; border-radius: 5px; }
+
+        .cart-bar { position: fixed; bottom: 0; width: 100%; background: #2c3e50; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; cursor: pointer; font-size: 18px; font-weight: bold; z-index: 101;}
+        #checkout-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; padding: 20px; box-sizing: border-box; overflow-y: auto;}
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2 style="margin:0;">Scan & Shop</h2>
+    </div>
+
+    <div class="filter-container">
+        <select class="category-select" id="category-filter" onchange="filterCategory()">
+            <option value="All">All Categories</option>
+            {% for category in store_items.keys() %}
+                <option value="cat-{{ category|replace(' ', '-') }}">{{ category }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    {% for category, items in store_items.items() %}
+        <div class="category-section" id="cat-{{ category|replace(' ', '-') }}">
+            <h3 class="category-title">{{ category }}</h3>
+            
+            {% for item in items %}
+            <div class="item-card">
+                <div class="item-info-wrapper">
+                    <img src="/static/images/{{ item.image_file }}" class="item-img" onerror="this.src='/static/images/default.png'">
+                    <div class="item-details">
+                        <p class="item-name">{{ item.name }}</p>
+                        <p class="item-price">₹{{ item.selling_price }}</p>
+                    </div>
+                </div>
+                
+                {% if item.current_stock > 0 %}
+                    <div id="action-{{ item.name|replace(' ', '-')|replace("'", "") }}">
+                        <button class="add-btn" onclick="updateQty('{{ item.name }}', {{ item.selling_price }}, 1)">ADD</button>
+                    </div>
+                {% else %}
+                    <div class="out-of-stock">Out of Stock</div>
+                {% endif %}
+
+            </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    <div class="cart-bar" onclick="openCheckout()">
+        <span id="cart-count">0 Items</span>
+        <span id="cart-total">Total: ₹0</span>
+        <span>Checkout ➔</span>
+    </div>
+
+    <div id="checkout-modal">
+        <h2>Checkout Summary</h2>
+        <div id="cart-summary"></div>
+        <h2 style="color: #27ae60; text-align: right;">Total: <span id="modal-total">₹0</span></h2>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <img src="/static/images/shop_qr.png" alt="Shop Payment QR" style="width: 200px; height: 200px; object-fit: contain; border: 2px solid #ccc; border-radius: 10px;" onerror="this.style.display='none'">
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+         <p style="font-size: 14px; color: #555; margin-bottom: 10px;">Step 1: Tap below to open your payment app.</p>
+
+         <button type="button" onclick="payViaUPI()" style="width: 100%; padding: 15px; background: #5f259f; color: white; border: none; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-bottom: 20px;">
+             ⚡ Pay via UPI App
+         </button>
+     </div>
+
+     <form action="/process_order" method="POST" id="checkout-form">
+         <input type="hidden" name="cart_data" id="cart_data_input">
+
+         <p style="font-size: 14px; color: #555; text-align: center;">Step 2: After paying, confirm your order.</p>
+         <button type="submit" id="confirm-btn" style="width: 100%; padding: 15px; background: #27ae60; color: white; border: none; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer;">
+             ✅ Confirm: I Have Paid
+         </button>
+
+         <button type="button" onclick="closeCheckout()" style="width: 100%; padding: 15px; background: #e74c3c; color: white; border: none; font-size: 18px; font-weight: bold; border-radius: 5px; margin-top: 10px; cursor: pointer;">
+             Cancel
+         </button>
+     </form>
+    </div>
+
+    <script>
+        // --- NEW JAVASCRIPT FOR CATEGORY FILTER ---
+        function filterCategory() {
+            let selected = document.getElementById("category-filter").value;
+            let sections = document.getElementsByClassName("category-section");
+            
+            for (let i = 0; i < sections.length; i++) {
+                if (selected === "All" || sections[i].id === selected) {
+                    sections[i].style.display = "block";
+                } else {
+                    sections[i].style.display = "none";
+                }
+            }
+        }
+
+        // --- EXISTING CART JAVASCRIPT ---
+        let cart = {}; 
+        
+        function updateQty(name, price, change) {
+            if (!cart[name]) cart[name] = { qty: 0, price: price };
+            cart[name].qty += change;
+            if (cart[name].qty <= 0) delete cart[name];
+            renderButton(name, price);
+            updateBottomBar();
+        }
+
+        function renderButton(name, price) {
+            let safeId = name.replace(/ /g, '-').replace(/'/g, "");
+            let actionDiv = document.getElementById('action-' + safeId);
+            
+            if (cart[name] && cart[name].qty > 0) {
+                actionDiv.innerHTML = `
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="updateQty('${name}', ${price}, -1)">−</button>
+                        <span class="qty-num">${cart[name].qty}</span>
+                        <button class="qty-btn" onclick="updateQty('${name}', ${price}, 1)">+</button>
+                    </div>
+                `;
+            } else {
+                actionDiv.innerHTML = `<button class="add-btn" onclick="updateQty('${name}', ${price}, 1)">ADD</button>`;
+            }
+        }
+
+        function updateBottomBar() {
+            let totalItems = 0;
+            let totalPrice = 0;
+            for (let item in cart) {
+                totalItems += cart[item].qty;
+                totalPrice += (cart[item].qty * cart[item].price);
+            }
+            document.getElementById('cart-count').innerText = totalItems + " Items";
+            document.getElementById('cart-total').innerText = "Total: ₹" + totalPrice;
+        }
+
+        function openCheckout() {
+            if (Object.keys(cart).length === 0) {
+                alert("Your cart is empty! Please add items first.");
+                return;
+            }
+            
+            document.getElementById('checkout-modal').style.display = 'block';
+            
+            let summaryHTML = "<table><tr><th>Item</th><th>Qty</th><th>Amount</th></tr>";
+            let grandTotal = 0;
+            let pythonCartData = [];
+
+            for (let name in cart) {
+                let itemTotal = cart[name].qty * cart[name].price;
+                grandTotal += itemTotal;
+                summaryHTML += `<tr><td>${name}</td><td>${cart[name].qty}</td><td>₹${itemTotal}</td></tr>`;
+                for (let i = 0; i < cart[name].qty; i++) {
+                    pythonCartData.push({ name: name, price: cart[name].price });
+                }
+            }
+            summaryHTML += "</table>";
+            
+            document.getElementById('cart-summary').innerHTML = summaryHTML;
+            document.getElementById('modal-total').innerText = "₹" + grandTotal;
+            document.getElementById('cart_data_input').value = JSON.stringify(pythonCartData);
+        }
+        function payViaUPI() {
+         // REPLACE THIS WITH YOUR REAL UPI ID (e.g., yournumber@ybl)
+         let shopUpiId = "9b0k0aOp2v504888@unitype"; 
+         let shopName = "Sonkamble Kirana store";
+
+         let amountToPay = 0;
+         for (let name in cart) {
+             amountToPay += (cart[name].qty * cart[name].price);
+         }
+
+         let upiLink = `upi://pay?pa=${shopUpiId}&pn=${shopName}&am=${amountToPay}&cu=INR`;
+         window.location.href = upiLink;
+        }
+        function closeCheckout() {
+            document.getElementById('checkout-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

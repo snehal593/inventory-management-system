@@ -6,10 +6,12 @@ import pandas as pd
 import datetime
 import os
 from dotenv import load_dotenv
+from flask_socketio import SocketIO, emit
 
 load_dotenv() # Loads variables from .env
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 app.secret_key = os.environ.get('SECRET_KEY') 
 DB_NAME = 'business.db'
 
@@ -38,13 +40,16 @@ def init_db():
                         qty REAL,
                         E REAL,
                         F REAL,
-                        current_stock INTEGER DEFAULT 0)''')
+                        current_stock INTEGER DEFAULT 0,
+                        category TEXT DEFAULT 'General',
+                        image_file TEXT DEFAULT 'default.png')''')
     
     cursor.execute('''CREATE TABLE IF NOT EXISTS transactions (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         item_name TEXT,
                         action_type TEXT,
                         quantity INTEGER,
+                        upi_id TEXT DEFAULT 'None',
                         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
     
     cursor.execute("SELECT * FROM users WHERE username='admin'")
@@ -56,9 +61,9 @@ def init_db():
     if cursor.fetchone()[0] == 0:
         X_units = {
             "Thums Up":[20, 470, 28, 180,7], "Sprite":[20, 470, 28, 180,7],
-            "String":[20, 510, 30, 90,7], "Limca":[20, 470, 28, 180,6],
+            "Sting":[20, 510, 30, 90,7], "Limca":[20, 470, 28, 180,6],
             "Maaza":[20, 550, 30, 120,3], "Dew":[20, 510, 30, 120,7],
-            "Plumpy":[25, 650, 30, 90,3], "Apple Fizz":[ 10, 340, 40, 180,3],
+            "pulpy orange":[25, 650, 30, 90,3], "Appy Fizz":[ 10, 340, 40, 180,3],
             "Mom's Magic": [5, 775, 180, 240,24], "Good Day":[5, 800, 180, 240,24],
             "Parle":[ 5, 645, 144, 180,12], "Marie Gold":[ 5, 700, 150, 180,10],
             "Happy Happy": [5, 220, 48, 120,3], "Cream Biscuits":[ 5, 220, 48, 120,3],
@@ -70,8 +75,23 @@ def init_db():
             "American": [20, 190, 10, 365,27], "Small Malbar":[ 12, 230, 20, 365,20]
         }
         for name, data in X_units.items():
-            cursor.execute('''INSERT INTO items (name, selling_price, bulk_cp, qty, E, F) 
-                              VALUES (?, ?, ?, ?, ?, ?)''', (name, data[0], data[1], data[2], data[3], data[4]))
+            # 1. Auto-generate the image name (e.g., thumsup.png)
+            auto_image_name = name.lower().replace(" ", "").replace("'", "") + ".png"
+            
+            # 2. Auto-assign the Category
+            if name in ["Thums Up", "Sprite", "Sting", "Limca", "Maaza", "Dew", "Pulpy orange", "Appy Fizz"]:
+                category = "Cool Drinks"
+            elif name in ["Mom's Magic", "Good Day", "Parle", "Marie Gold", "Happy Happy", "Cream Biscuits"]:
+                category = "Biscuits"
+            elif name in ["Kings", "Lights", "Small Gold", "Small Advance", "Millies", "Charms","Silk", "Bristol", "Malabar", "Connect", "American", "Small Malbar"]:
+                category = "Cigarettes"
+            else:
+                category = "General"
+            
+            # 3. Save EVERYTHING (including category) into the database
+            cursor.execute('''INSERT INTO items (name, selling_price, bulk_cp, qty, E, F, image_file, category) 
+                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
+                           (name, data[0], data[1], data[2], data[3], data[4], auto_image_name, category))
     
     conn.commit()
     conn.close()
@@ -358,6 +378,73 @@ def get_pso_data():
 
     return jsonify({"optimization_history": graph_points, "business_plan": business_plan})
 
+# ==========================================
+# ROUTES: CUSTOMER STOREFRONT (PUBLIC)
+# ==========================================
+import json
+
+@app.route('/store')
+def store():
+    conn = get_db()
+    # Fetch all items and sort them by Category
+    items = conn.execute("SELECT * FROM items ORDER BY category, name").fetchall()
+    conn.close()
+
+    # Group items into a dictionary so HTML can display them under headers
+    # Group items into a dictionary so HTML can display them under headers
+    store_items = {}
+    for item in items:
+        cat = item['category']
+        if cat not in store_items:
+            store_items[cat] = []
+        store_items[cat].append(dict(item))
+
+    return render_template('store.html', store_items=store_items)
+
+@app.route('/process_order', methods=['POST'])
+def process_order():
+    cart_data = request.form.get('cart_data')
+    if not cart_data:
+        return redirect(url_for('store'))
+
+    items = json.loads(cart_data)
+
+    order_summary = {}
+    grand_total = 0
+    for item in items:
+        name = item['name']
+        price = item['price']
+        order_summary[name] = order_summary.get(name, 0) + 1
+        grand_total += price
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Deduct stock and save to database (No manual UPI ID needed anymore)
+    for name, qty in order_summary.items():
+        cursor.execute("UPDATE items SET current_stock = MAX(0, current_stock - ?) WHERE name = ?", (qty, name))
+        cursor.execute("INSERT INTO transactions (item_name, action_type, quantity) VALUES (?, 'sell', ?)", (name, qty))
+
+    conn.commit()
+    conn.close()
+
+    # BROADCAST TO ADMIN DASHBOARD
+    order_details = {
+        "items": order_summary,
+        "total": grand_total,
+        "time": datetime.datetime.now().strftime("%I:%M %p")
+    }
+    socketio.emit('new_order', order_details)
+
+    return f"""
+        <div style='text-align:center; font-family:Arial; padding:50px;'>
+            <h1 style='color:green;'>Order Confirmed!</h1>
+            <h2>Total Paid: ₹{grand_total}</h2>
+            <p>The shop owner has been notified. Please collect your items.</p>
+            <br><br>
+            <a href='/store' style='padding:15px; background:#3498db; color:white; text-decoration:none; border-radius:5px;'>Return to Store</a>
+        </div>
+    """
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    socketio.run(app, debug=True, port=5000)
