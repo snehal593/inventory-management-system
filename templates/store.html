@@ -89,34 +89,34 @@
         <div id="cart-summary"></div>
         <h2 style="color: #27ae60; text-align: right;">Total: <span id="modal-total">₹0</span></h2>
 
-        <div style="text-align: center; margin: 30px 0;">
-            <img src="/static/images/shop_qr.png" alt="Shop Payment QR" style="width: 200px; height: 200px; object-fit: contain; border: 2px solid #ccc; border-radius: 10px;" onerror="this.style.display='none'">
+        <!-- The Dynamic QR Code Section for POS -->
+        <div style="text-align: center; margin: 30px 0; background: #f9f9f9; padding: 20px; border-radius: 10px; border: 1px solid #ddd;">
+            <p style="font-size: 18px; color: #333; margin-bottom: 5px;"><b>Customer Total: ₹<span id="qr-amount-display">0</span></b></p>
+            <p style="font-size: 14px; color: #777; margin-bottom: 20px;">Ask the customer to scan this QR with GPay / PhonePe</p>
+            
+            <!-- The QR code will be injected inside this div automatically -->
+            <div id="qrcode" style="display: flex; justify-content: center; margin: 0 auto;"></div>
         </div>
 
-        <div style="text-align: center; margin: 30px 0;">
-         <p style="font-size: 14px; color: #555; margin-bottom: 10px;">Step 1: Tap below to open your payment app.</p>
+        <form action="/process_order" method="POST" id="checkout-form">
+            <input type="hidden" name="cart_data" id="cart_data_input">
 
-         <button type="button" onclick="payViaUPI()" style="width: 100%; padding: 15px; background: #5f259f; color: white; border: none; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-bottom: 20px;">
-             ⚡ Pay via UPI App
-         </button>
-     </div>
+            <p style="font-size: 14px; color: #555; text-align: center;">Wait for the Soundbox to confirm payment.</p>
+            <button type="submit" id="confirm-btn" style="width: 100%; padding: 15px; background: #27ae60; color: white; border: none; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer;">
+                ✅ Confirm: Payment Received
+            </button>
 
-     <form action="/process_order" method="POST" id="checkout-form">
-         <input type="hidden" name="cart_data" id="cart_data_input">
-
-         <p style="font-size: 14px; color: #555; text-align: center;">Step 2: After paying, confirm your order.</p>
-         <button type="submit" id="confirm-btn" style="width: 100%; padding: 15px; background: #27ae60; color: white; border: none; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer;">
-             ✅ Confirm: I Have Paid
-         </button>
-
-         <button type="button" onclick="closeCheckout()" style="width: 100%; padding: 15px; background: #e74c3c; color: white; border: none; font-size: 18px; font-weight: bold; border-radius: 5px; margin-top: 10px; cursor: pointer;">
-             Cancel
-         </button>
-     </form>
+            <button type="button" onclick="closeCheckout()" style="width: 100%; padding: 15px; background: #e74c3c; color: white; border: none; font-size: 18px; font-weight: bold; border-radius: 5px; margin-top: 10px; cursor: pointer;">
+                Cancel Order
+            </button>
+        </form>
     </div>
 
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <script>
-        // --- NEW JAVASCRIPT FOR CATEGORY FILTER ---
+        // --- CATEGORY FILTER ---
         function filterCategory() {
             let selected = document.getElementById("category-filter").value;
             let sections = document.getElementsByClassName("category-section");
@@ -130,7 +130,7 @@
             }
         }
 
-        // --- EXISTING CART JAVASCRIPT ---
+        // --- CART LOGIC ---
         let cart = {}; 
         
         function updateQty(name, price, change) {
@@ -169,6 +169,33 @@
             document.getElementById('cart-total').innerText = "Total: ₹" + totalPrice;
         }
 
+        // --- DYNAMIC QR CODE GENERATOR ---
+        function generateQRCode(amountToPay) {
+            // 1. Clear any old QR code from the previous customer
+            document.getElementById("qrcode").innerHTML = "";
+            
+            // 2. Update the display text so you know what amount it is showing
+            document.getElementById("qr-amount-display").innerText = amountToPay;
+
+            // 3. Your Dad's Business Details
+            let shopUpiId = "Q08053447@ybl"; 
+            let shopName = "Sonkamble Bhim Rao";
+            
+            // 4. Build the link (stripped of merchant codes to bypass the security block)
+            let upiLink = `upi://pay?pa=${shopUpiId}&pn=${shopName.replace(/ /g, '%20')}&am=${amountToPay}&cu=INR`;
+            
+            // 5. Draw the QR code on the tablet screen!
+            new QRCode(document.getElementById("qrcode"), {
+                text: upiLink,
+                width: 220,
+                height: 220,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+
+        // --- CHECKOUT LOGIC ---
         function openCheckout() {
             if (Object.keys(cart).length === 0) {
                 alert("Your cart is empty! Please add items first.");
@@ -194,20 +221,11 @@
             document.getElementById('cart-summary').innerHTML = summaryHTML;
             document.getElementById('modal-total').innerText = "₹" + grandTotal;
             document.getElementById('cart_data_input').value = JSON.stringify(pythonCartData);
-        }
-        function payViaUPI() {
-         // REPLACE THIS WITH YOUR REAL UPI ID (e.g., yournumber@ybl)
-         let shopUpiId = "Q08053447@ybl"; 
-         let shopName = "Sonkamble Bhim Rao";
 
-         let amountToPay = 0;
-         for (let name in cart) {
-             amountToPay += (cart[name].qty * cart[name].price);
-         }
-
-         let upiLink = `upi://pay?pa=${shopUpiId}&pn=${shopName}&am=${amountToPay}&cu=INR`;
-         window.location.href = upiLink;
+            // Generate the dynamic QR Code instantly when modal opens!
+            generateQRCode(grandTotal);
         }
+
         function closeCheckout() {
             document.getElementById('checkout-modal').style.display = 'none';
         }
