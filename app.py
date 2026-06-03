@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for,send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import numpy as np
@@ -118,6 +118,15 @@ def load_math_data():
 # ==========================================
 # ROUTES: AUTHENTICATION & DASHBOARD
 # ==========================================
+
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
