@@ -125,7 +125,7 @@ def serve_manifest():
 
 @app.route('/sw.js')
 def serve_sw():
-    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
+    return send_from_directory('static', 'sw.js')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
