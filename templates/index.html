@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="/manifest-admin.json">
+    <meta name="theme-color" content="#1f2937">
+    <link rel="apple-touch-icon" href="/static/images/icon-192.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Dashboard</title>
@@ -619,5 +622,15 @@
         location.reload(); 
     });
 </script>
+<script>
+        // --- REGISTER PWA SERVICE WORKER ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker Registered!', reg))
+                    .catch(err => console.error('Service Worker Failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>

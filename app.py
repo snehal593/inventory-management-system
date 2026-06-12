@@ -118,6 +118,9 @@ def load_math_data():
 # ==========================================
 # ROUTES: AUTHENTICATION & DASHBOARD
 # ==========================================
+@app.route('/manifest-admin.json')
+def serve_admin_manifest():
+    return send_from_directory('static', 'manifest-admin.json')
 
 @app.route('/manifest.json')
 def serve_manifest():
