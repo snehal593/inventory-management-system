@@ -1,9 +1,9 @@
 # Sonkamble Enterprise POS & Algorithmic Procurement Engine
 
-## 📖 Overview
+## 1.Overview
 A cloud-hosted, real-time retail ecosystem designed to modernize local business operations. This project features a dual Progressive Web App (PWA) architecture, a zero-fee programmatic UPI payment infrastructure, and a machine learning-inspired procurement optimization engine powered by Particle Swarm Optimization (PSO). It bridges the gap between high-speed counter billing and advanced business intelligence.
 
-## ⚠️ The Problem Statement
+## 2.The Problem Statement
 When I had to temporarily manage my father's small retail shop, I quickly encountered the "micro-retail bottleneck": operating a physical business purely on intuition. I identified three major engineering challenges:
 
 **1.Capital Inefficiency:** Ordering based on "gut feeling" wastes limited budgets on slow-moving stock, while high-profit items constantly sell out.
@@ -14,7 +14,7 @@ When I had to temporarily manage my father's small retail shop, I quickly encoun
 
 **The Solution:** This ecosystem isolates the counter-billing (Shop POS) from the management dashboard (Admin PWA) while keeping them perfectly synced via WebSockets. Furthermore, it replaces "guessing" with a PSO algorithm that calculates the exact amount of stock to buy for maximum Return on Investment (ROI).
 
-## 💻 Tech Stack
+## 3.Tech Stack
 * **Backend Framework:** Python, Flask
 * **Real-Time Engine:** WebSockets (Flask-SocketIO)
 * **Database:** SQLite3 (ACID-compliant relational design)
@@ -22,10 +22,7 @@ When I had to temporarily manage my father's small retail shop, I quickly encoun
 * **Data Visualization:** Chart.js
 * **Algorithmic Engine:** NumPy, Pandas
 
-## 🏗️ System Architecture
-The application runs on a centralized Flask core, utilizing the principle of **Separation of Concerns**. It exposes RESTful endpoints for state changes and WebSocket gateways for zero-latency synchronization between two separate frontends.
-
-## 🏗️ System Architecture
+## 4.System Architecture
 The application runs on a centralized Flask core, utilizing the principle of **Separation of Concerns**. It exposes RESTful endpoints for state changes and WebSocket gateways for zero-latency synchronization between two separate frontends.
 
 ```text
@@ -45,7 +42,7 @@ The application runs on a centralized Flask core, utilizing the principle of **S
                                       +------- WebSockets Sync -------+
                                               (Zero-Latency Updates)
 ```
-## ⚙️ Installation & Setup (Local Development)
+## 5.Installation & Setup (Local Development)
 
 Follow these exact steps to run the complete dual-PWA ecosystem on your local machine.
 
@@ -101,7 +98,7 @@ Once the local server is running, open your web browser and navigate to:
 *(Note for local development: The system automatically provisions a test admin account. You can log in using Username: `admin`, Password: `admin123`. For production deployments, ensure you override this by setting the `ADMIN_PASSWORD` variable in your `.env` file).*
 
 
-###  The Optimization Algorithm (Particle Swarm Optimization)
+### 6.The Optimization Algorithm (Particle Swarm Optimization)
 Instead of relying on basic inventory thresholds or arbitrary reorder points, the backend features a custom deterministic model that calculates the mathematically optimal purchase order for every single stock item. 
 
 The engine simulates a multi-dimensional search space where $100$ individual "particles" (candidate inventory strategies) evaluate potential purchasing combinations over $500$ iterations.
@@ -118,7 +115,7 @@ $$V_{t+1} = w_1(g_{best} - X_t) + w_2(p_{best} - X_t) + \text{rand}()$$
 
 ---
 
-### Frontend & Backend Pipeline (How Data Flows)
+### 7.Frontend & Backend Pipeline (How Data Flows)
 The ecosystem completely abandons standard HTTP polling, ensuring that changes at the physical shop counter instantly reflect on the manager's dashboard without a page refresh.
 
 * **The Transaction Flow:** 1. The **Shop POS Frontend** processes a sale and updates its local cart state using optimized JavaScript event listeners.
@@ -129,7 +126,7 @@ The ecosystem completely abandons standard HTTP polling, ensuring that changes a
   3. A JavaScript callback catches the data, dynamically mutates the DOM, re-renders the Chart.js business analytics canvas, and triggers a real-time auditory alert.
 
 ---
-## 📸 Outputs & Results
+## 8.Outputs & Results
 *Below are live screenshots demonstrating the operational dual-PWA architecture and real-time backend updates.*
 
 #### 1. Admin Analytics & Inventory Management Dashboard
@@ -139,6 +136,11 @@ The ecosystem completely abandons standard HTTP polling, ensuring that changes a
 
 
 #### 3. Dynamic UPI Payment QR Code Modal Generation
+
+
+
+## 9.Live App Link:https://bhimrao.pythonanywhere.com/
+
 
 
 
