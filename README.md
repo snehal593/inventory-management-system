@@ -25,6 +25,9 @@ When I had to temporarily manage my father's small retail shop, I quickly encoun
 ## 🏗️ System Architecture
 The application runs on a centralized Flask core, utilizing the principle of **Separation of Concerns**. It exposes RESTful endpoints for state changes and WebSocket gateways for zero-latency synchronization between two separate frontends.
 
+## 🏗️ System Architecture
+The application runs on a centralized Flask core, utilizing the principle of **Separation of Concerns**. It exposes RESTful endpoints for state changes and WebSocket gateways for zero-latency synchronization between two separate frontends.
+
 ```text
                                   +---------------------------------------+
                                   |         Flask Cloud Backend           |
@@ -41,5 +44,60 @@ The application runs on a centralized Flask core, utilizing the principle of **S
                                       |                               |
                                       +------- WebSockets Sync -------+
                                               (Zero-Latency Updates)
+```
+## ⚙️ Installation & Setup (Local Development)
+
+Follow these exact steps to run the complete dual-PWA ecosystem on your local machine.
+
+### Prerequisites
+* Python 3.8+ installed on your machine.
+* Git installed.
+
+### Step 1: Clone the Repository
+Open your terminal or command prompt and run:
+bash
+git clone https://github.com/snehal533/inventory-management-system.git
+cd inventory-management-system
+
+
+### Step 2: Create & Activate a Virtual Environment
+It is highly recommended to isolate the project dependencies to prevent conflicts.
+
+**On Windows:**
+bash
+python -m venv venv
+venv\Scripts\activate
+
+
+**On macOS/Linux:**
+bash
+python3 -m venv venv
+source venv/bin/activate
+
+
+### Step 3: Install Dependencies
+Install the required Python libraries using the `requirements.txt` file:
+bash
+pip install -r requirements.txt
+
+
+### Step 4: Configure Environment Variables
+Create a new file named `.env` in the root directory of the project. Add your secret key for Flask session security:
+text
+SECRET_KEY=your_super_secret_key_here
+
+
+### Step 5: Initialize and Run the Server
+The application features auto-initialization. When you run it for the first time, it will automatically generate the `business.db` SQLite database and populate it with the default inventory algorithm parameters.
+bash
+python app.py
+
+
+### Step 6: Access the Ecosystem
+Once the local server is running, open your web browser and navigate to:
+* **Admin Dashboard (Management & PSO Engine):** `http://127.0.0.1:5000/`
+* **Shop POS Terminal (Counter Billing):** `http://127.0.0.1:5000/store`
+
+*(Note for local development: The system automatically provisions a test admin account. You can log in using Username: `admin`, Password: `admin123`. For production deployments, ensure you override this by setting the `ADMIN_PASSWORD` variable in your `.env` file).*
 
 
