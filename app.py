@@ -54,7 +54,8 @@ def init_db():
     
     cursor.execute("SELECT * FROM users WHERE username='admin'")
     if not cursor.fetchone():
-        hashed_pw = generate_password_hash('LALITHA15!')
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+        hashed_pw = generate_password_hash(admin_password)
         cursor.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", ('admin', hashed_pw))
     
     cursor.execute("SELECT COUNT(*) FROM items")
