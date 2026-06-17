@@ -1,4 +1,4 @@
-# Sonkamble Enterprise POS & Algorithmic Procurement Engine
+# Imventory Management System - PSO Algorithm
 
 ## 1.Overview
 A cloud-hosted, real-time retail ecosystem designed to modernize local business operations. This project features a dual Progressive Web App (PWA) architecture, a zero-fee programmatic UPI payment infrastructure, and a machine learning-inspired procurement optimization engine powered by Particle Swarm Optimization (PSO). It bridges the gap between high-speed counter billing and advanced business intelligence.
@@ -134,9 +134,12 @@ The ecosystem completely abandons standard HTTP polling, ensuring that changes a
 
 
 #### 2. Mobile-First Shop POS Counter Billing Interface
+<img width="1895" height="961" alt="Screenshot 2026-06-16 205252" src="https://github.com/user-attachments/assets/c8dfea61-546e-46c6-a16c-d249f849336b" />
 
 
 #### 3. Dynamic UPI Payment QR Code Modal Generation
+<img width="1862" height="962" alt="Screenshot 2026-06-16 205400" src="https://github.com/user-attachments/assets/630ef388-bd32-4dc4-8a18-75369e0fee57" />
+
 ---
 
 ## 9.Live App Link: https://bhimrao.pythonanywhere.com/
