@@ -130,6 +130,7 @@ The ecosystem completely abandons standard HTTP polling, ensuring that changes a
 *Below are live screenshots demonstrating the operational dual-PWA architecture and real-time backend updates.*
 
 #### 1. Admin Analytics & Inventory Management Dashboard
+<img width="1913" height="873" alt="Screenshot 2026-06-16 204708" src="https://github.com/user-attachments/assets/aefc1180-befa-4e4d-bba7-0a69993fbca8" />
 
 
 #### 2. Mobile-First Shop POS Counter Billing Interface
