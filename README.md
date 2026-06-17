@@ -113,7 +113,7 @@ $$V_{t+1} = w_1(g_{best} - X_t) + w_2(p_{best} - X_t) + \text{rand}()$$
 
 * **Real-World Business Output:** The mathematical minimum discovered by the swarm is parsed directly into a readable "Restock Business Plan," telling the owner the exact unit counts to buy to maximize Return on Investment (ROI) without exceeding their budget.
 
----
+
 
 ### 7.Frontend & Backend Pipeline (How Data Flows)
 The ecosystem completely abandons standard HTTP polling, ensuring that changes at the physical shop counter instantly reflect on the manager's dashboard without a page refresh.
@@ -125,7 +125,7 @@ The ecosystem completely abandons standard HTTP polling, ensuring that changes a
   2. The **Admin Dashboard Frontend**, maintaining a persistent full-duplex WebSocket link, intercepts the payload in real-time.
   3. A JavaScript callback catches the data, dynamically mutates the DOM, re-renders the Chart.js business analytics canvas, and triggers a real-time auditory alert.
 
----
+
 ## 8.Outputs & Results
 *Below are live screenshots demonstrating the operational dual-PWA architecture and real-time backend updates.*
 
@@ -137,7 +137,8 @@ The ecosystem completely abandons standard HTTP polling, ensuring that changes a
 
 #### 3. Dynamic UPI Payment QR Code Modal Generation
 
-**9.Live App Link:** https://bhimrao.pythonanywhere.com/
+
+## **9.Live App Link:** https://bhimrao.pythonanywhere.com/
 
 
 
