@@ -141,8 +141,10 @@ The ecosystem completely abandons standard HTTP polling, ensuring that changes a
 <img width="1862" height="962" alt="Screenshot 2026-06-16 205400" src="https://github.com/user-attachments/assets/630ef388-bd32-4dc4-8a18-75369e0fee57" />
 
 ---
+## 9.Conclusion
+This project represents more than just a web application; it is a scalable engineering solution to a socio-economic bottleneck. By applying deterministic mathematical algorithms (PSO) and modern web architecture (Dual-PWAs, WebSockets) to traditional micro-retail, it completely eliminates the guesswork of inventory management. It proves that enterprise-grade business intelligence can be deployed efficiently and affordably to small business owners on low-power devices.
 
-## 9.Live App Link: https://bhimrao.pythonanywhere.com/
+## 10.Live App Link: https://bhimrao.pythonanywhere.com/
 
 
 
