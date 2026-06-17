@@ -136,9 +136,9 @@ The ecosystem completely abandons standard HTTP polling, ensuring that changes a
 
 
 #### 3. Dynamic UPI Payment QR Code Modal Generation
+---
 
-
-## **9.Live App Link:** https://bhimrao.pythonanywhere.com/
+## 9.Live App Link: https://bhimrao.pythonanywhere.com/
 
 
 
