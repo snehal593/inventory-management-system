@@ -98,7 +98,7 @@ Once the local server is running, open your web browser and navigate to:
 *(Note for local development: The system automatically provisions a test admin account. You can log in using Username: `admin`, Password: `admin123`. For production deployments, ensure you override this by setting the `ADMIN_PASSWORD` variable in your `.env` file).*
 
 
-### 6.The Optimization Algorithm (Particle Swarm Optimization)
+## 6.The Optimization Algorithm (Particle Swarm Optimization)
 Instead of relying on basic inventory thresholds or arbitrary reorder points, the backend features a custom deterministic model that calculates the mathematically optimal purchase order for every single stock item. 
 
 The engine simulates a multi-dimensional search space where $100$ individual "particles" (candidate inventory strategies) evaluate potential purchasing combinations over $500$ iterations.
@@ -115,7 +115,7 @@ $$V_{t+1} = w_1(g_{best} - X_t) + w_2(p_{best} - X_t) + \text{rand}()$$
 
 
 
-### 7.Frontend & Backend Pipeline (How Data Flows)
+## 7.Frontend & Backend Pipeline (How Data Flows)
 The ecosystem completely abandons standard HTTP polling, ensuring that changes at the physical shop counter instantly reflect on the manager's dashboard without a page refresh.
 
 * **The Transaction Flow:** 1. The **Shop POS Frontend** processes a sale and updates its local cart state using optimized JavaScript event listeners.
