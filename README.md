@@ -1,4 +1,4 @@
-# Imventory Management System - PSO Algorithm
+# Inventory Management System - PSO Algorithm
 
 ## 1.Overview
 A cloud-hosted, real-time retail ecosystem designed to modernize local business operations. This project features a dual Progressive Web App (PWA) architecture, a zero-fee programmatic UPI payment infrastructure, and a machine learning-inspired procurement optimization engine powered by Particle Swarm Optimization (PSO). It bridges the gap between high-speed counter billing and advanced business intelligence.
